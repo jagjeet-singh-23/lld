@@ -9,6 +9,12 @@ type OrdersRepo struct {
 	Orders map[string]*dto.OrderCtx
 }
 
+func NewOrderRepository() *OrdersRepo {
+	return &OrdersRepo{
+		Orders: make(map[string]*dto.OrderCtx),
+	}
+}
+
 func (r *OrdersRepo) PlaceOrder(ctx *dto.OrderCtx) error {
 	if _, ok := r.Orders[ctx.OrderID]; ok {
 		return DuplicateOrderError{

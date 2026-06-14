@@ -4,7 +4,6 @@ import (
 	"github.com/jagjeet-singh-23/food-delivery-pipeline/internal/domain/notification/channels"
 	"github.com/jagjeet-singh-23/food-delivery-pipeline/internal/domain/notification/enums"
 	"github.com/jagjeet-singh-23/food-delivery-pipeline/internal/domain/notification/interfaces"
-	shared "github.com/jagjeet-singh-23/food-delivery-pipeline/internal/shared/interfaces"
 )
 
 type NotificationService struct {
@@ -12,7 +11,7 @@ type NotificationService struct {
 	userPreferences map[string][]enums.Channel
 }
 
-func NewNotificationService(bus *shared.EventBus) *NotificationService {
+func NewNotificationService() *NotificationService {
 	return &NotificationService{
 		registry: channels.NewChannelRegistry(),
 	}

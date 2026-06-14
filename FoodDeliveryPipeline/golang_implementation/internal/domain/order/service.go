@@ -8,7 +8,6 @@ import (
 	"github.com/jagjeet-singh-23/food-delivery-pipeline/internal/domain/order/dto"
 	"github.com/jagjeet-singh-23/food-delivery-pipeline/internal/domain/order/enums"
 	"github.com/jagjeet-singh-23/food-delivery-pipeline/internal/shared/interfaces"
-	"github.com/jagjeet-singh-23/food-delivery-pipeline/internal/shared/utils"
 )
 
 type OrderService struct {
@@ -44,7 +43,7 @@ func (s *OrderService) PlaceOrder(orderID string) error {
 	}
 
 	fmt.Printf("Order placed successfully: %s", ctx.OrderID)
-	event := utils.NewEvent(string(enums.Placed), map[string]any{
+	event := interfaces.NewEvent(string(enums.Placed), map[string]any{
 		"orderID":   orderID,
 		"fromState": nil,
 		"toState":   enums.Accepted,
@@ -89,11 +88,13 @@ func (s *OrderService) CancelOrder(orderID string) error {
 }
 
 func (s *OrderService) transitionOrder(orderID string, action orderAction) error {
-	fromState, toState := transitionStates(action)
 	ctx, err := s.repo.GetOrder(orderID)
 	if err != nil {
 		return err
 	}
+
+	fromState := ctx.CurrentState
+	toState := targetState(action)
 
 	if ok, err := s.validateTransition(ctx.CurrentState, toState); !ok {
 		return err
@@ -107,7 +108,7 @@ func (s *OrderService) transitionOrder(orderID string, action orderAction) error
 	cmd.Execute()
 
 	fmt.Printf("Order transitioned successfully: %s", ctx.OrderID)
-	event := utils.NewEvent(string(toState), map[string]any{
+	event := interfaces.NewEvent(string(toState), map[string]any{
 		"orderID":   orderID,
 		"fromState": fromState,
 		"toState":   toState,
@@ -187,11 +188,17 @@ func transitionStates(action orderAction) (enums.State, enums.State) {
 	return transition.fromState, transition.toState
 }
 
+func targetState(action orderAction) enums.State {
+	_, target := transitionStates(action)
+
+	return target
+}
+
 func (s *OrderService) publishEvent(event interfaces.Event) {
 	go func(event interfaces.Event) {
 		err := s.bus.Publish(event)
 		if err != nil {
-			fmt.Errorf("%w", err)
+			fmt.Println("%w", err)
 		}
 	}(event)
 }

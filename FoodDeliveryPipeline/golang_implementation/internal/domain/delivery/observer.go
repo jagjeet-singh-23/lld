@@ -23,17 +23,17 @@ func (o *DeliveryObserver) Update(event shared.Event) error {
 	o.mu.RLock()
 	orderID, err := validateMetadata(event.Metadata)
 	if err != nil {
-		o.mu.Unlock()
+		o.mu.RUnlock()
 		return err
 	}
 
 	if event.EventType != string(orderStates.Ready) {
-		o.mu.Unlock()
+		o.mu.RUnlock()
 		return OrderNotReadyYet{
 			OrderID: orderID,
 		}
 	}
-	o.mu.Unlock()
+	o.mu.RUnlock()
 
 	o.mu.Lock()
 	defer o.mu.Unlock()
