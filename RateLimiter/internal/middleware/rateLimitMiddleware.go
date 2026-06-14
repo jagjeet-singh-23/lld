@@ -4,16 +4,16 @@ import (
 	"fmt"
 	"net/http"
 
-	"github.com/jagjeet-singh-23/rate-limiter/internal"
 	"github.com/jagjeet-singh-23/rate-limiter/internal/shared/entities"
+	"github.com/jagjeet-singh-23/rate-limiter/internal/shared/interfaces"
 )
 
 type RateLimitMiddleware struct {
 	next    http.Handler
-	limiter *internal.RateLimiter
+	limiter interfaces.IRateLimiter
 }
 
-func NewRateLimitMiddleware(next http.Handler, limiter *internal.RateLimiter) *RateLimitMiddleware {
+func NewRateLimitMiddleware(next http.Handler, limiter interfaces.IRateLimiter) *RateLimitMiddleware {
 	return &RateLimitMiddleware{
 		next:    next,
 		limiter: limiter,

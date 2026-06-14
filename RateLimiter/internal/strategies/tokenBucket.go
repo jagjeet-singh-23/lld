@@ -39,10 +39,7 @@ func (b *TokenBucket) Allow(ctx *entities.RequestContext) (bool, time.Duration) 
 		b.redis[ctx.UserID] = userCtx
 	}
 
-	userCurrentTokens := userCtx.Tokens
-	lastRefillAt := userCtx.LastRefillAt
-
-	timeSinceLastReq := float32(time.Since(lastRefillAt).Nanoseconds())
+	timeSinceLastReq := float32(time.Since(userCtx.LastRefillAt).Nanoseconds())
 	tokensToAdd := timeSinceLastReq * b.config.RefillRate
 
 	userCtx.Tokens = min(b.config.MaxCapacity, userCtx.Tokens+tokensToAdd)
@@ -50,7 +47,7 @@ func (b *TokenBucket) Allow(ctx *entities.RequestContext) (bool, time.Duration) 
 
 	b.redis[ctx.UserID] = userCtx
 
-	if userCurrentTokens >= 1 {
+	if userCtx.Tokens >= 1 {
 		userCtx.Tokens--
 		b.redis[ctx.UserID] = userCtx
 		return true, 0
