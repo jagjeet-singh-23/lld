@@ -1,7 +1,6 @@
 package strategies
 
 import (
-	"fmt"
 	"sync"
 	"time"
 
@@ -33,8 +32,11 @@ func (b *TokenBucket) Allow(ctx *entities.RequestContext) (bool, time.Duration) 
 
 	userCtx, ok := b.redis[ctx.UserID]
 	if !ok {
-		fmt.Printf("unauthorized: no user found: %s", ctx.UserID)
-		return false, 0
+		userCtx = &UserRequestCtx{
+			Tokens:       b.config.MaxCapacity,
+			LastRefillAt: time.Now(),
+		}
+		b.redis[ctx.UserID] = userCtx
 	}
 
 	userCurrentTokens := userCtx.Tokens
@@ -43,7 +45,7 @@ func (b *TokenBucket) Allow(ctx *entities.RequestContext) (bool, time.Duration) 
 	timeSinceLastReq := float32(time.Since(lastRefillAt).Nanoseconds())
 	tokensToAdd := timeSinceLastReq * b.config.RefillRate
 
-	userCtx.Tokens = max(b.config.MaxCapacity, userCtx.Tokens+tokensToAdd)
+	userCtx.Tokens = min(b.config.MaxCapacity, userCtx.Tokens+tokensToAdd)
 	userCtx.LastRefillAt = time.Now()
 
 	b.redis[ctx.UserID] = userCtx
@@ -55,7 +57,6 @@ func (b *TokenBucket) Allow(ctx *entities.RequestContext) (bool, time.Duration) 
 	}
 
 	tokensNeeded := 1.0 - userCtx.Tokens
-	timeToWait := tokensNeeded / float32(b.config.RefillRate)
-
-	return false, time.Duration(timeToWait)
+	timeToWait := time.Duration(float64(tokensNeeded) / float64(b.config.RefillRate) * float64(time.Second))
+	return false, timeToWait
 }

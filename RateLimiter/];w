@@ -62,3 +62,20 @@ func (b *LeakyBucket) cleanup() {
 	}
 	b.requestQueue = b.requestQueue[firstValidIdx:]
 }
+
+func (b *LeakyBucket) canAcceptRequest() (bool, time.Duration) {
+	b.mu.RLock()
+	defer b.mu.RUnlock()
+
+	if len(b.requestQueue) >= int(b.config.MaxCapacity) {
+		leakInterval := time.Duration(float64(time.Second) / float64(b.config.RefillRate))
+		oldest := b.requestQueue[0]
+		retryAfter := time.Until(oldest.Timestamp.Add(leakInterval))
+		if retryAfter < 0 {
+			retryAfter = 0
+		}
+		return false, retryAfter
+	}
+
+	return true, 0
+}

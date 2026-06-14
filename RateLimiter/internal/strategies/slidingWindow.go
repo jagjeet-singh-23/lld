@@ -27,7 +27,7 @@ func NewSlidingWindow(config config.RateLimitConfig) *SlidingWindow {
 	}
 }
 
-func (sw *SlidingWindow) Allow(ctx entities.RequestContext) (bool, time.Duration) {
+func (sw *SlidingWindow) Allow(ctx *entities.RequestContext) (bool, time.Duration) {
 	sw.mu.Lock()
 	defer sw.mu.Unlock()
 

@@ -11,6 +11,10 @@ func NewRateLimiterFactory(strategy string, config config.RateLimitConfig) (inte
 	switch strategy {
 	case "token_bucket":
 		return NewTokenBucket(config), nil
+	case "leaky_bucket":
+		return NewLeakyBucket(config), nil
+	case "sliding_window":
+		return NewSlidingWindow(config), nil
 	default:
 		return nil, fmt.Errorf("no such strategy found: %s", strategy)
 	}
